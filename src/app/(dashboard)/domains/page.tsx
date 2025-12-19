@@ -117,7 +117,7 @@ export default async function DomainsPage() {
                     {group.providerName} • {group.domains.length} domains
                   </CardDescription>
                 </div>
-                <form action={syncProvider.bind(null, group.providerId)}>
+                <form action={async () => { await syncProvider(group.providerId); }}>
                   <Button type="submit" variant="outline" size="sm">
                     <RefreshCw className="mr-1 h-3 w-3" />
                     Sync All
