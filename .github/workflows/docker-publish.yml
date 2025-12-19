@@ -7,7 +7,6 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  # 镜像名称通常为：ghcr.io/用户名/仓库名
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
@@ -28,6 +27,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # --- 关键修复：添加以下步骤 ---
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker-container # 必须指定驱动以支持 gha 缓存
+      # ----------------------------
+
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@v5
@@ -43,9 +49,7 @@ jobs:
         with:
           context: .
           push: true
-          # 使用 steps.meta 引用上面的 metadata 步骤
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          # 使用 GitHub Action 缓存以加快后续构建速度
           cache-from: type=gha
           cache-to: type=gha,mode=max
