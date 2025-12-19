@@ -2,11 +2,12 @@ name: Build and Push Docker Image
 
 on:
   push:
-    branches: ["main"] # 仅在推送到 main 分支时触发
-    tags: ["v*.*.*"]    # 或者在推送版本标签时触发
+    branches: ["main"]
+    tags: ["v*.*.*"]
 
 env:
   REGISTRY: ghcr.io
+  # 镜像名称通常为：ghcr.io/用户名/仓库名
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
@@ -42,8 +43,9 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ id.meta.outputs.tags }}
-          labels: ${{ id.meta.outputs.labels }}
-          # Next.js standalone 构建通常需要此缓存加速
+          # 使用 steps.meta 引用上面的 metadata 步骤
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # 使用 GitHub Action 缓存以加快后续构建速度
           cache-from: type=gha
           cache-to: type=gha,mode=max
