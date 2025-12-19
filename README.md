@@ -22,11 +22,19 @@ A unified DNS management system that supports multiple DNS providers (Cloudflare
 ## Features
 
 - **Multi-Provider Support**: Manage DNS records across multiple providers from a single dashboard
-- **Secure Authentication**: GitHub OAuth authentication with NextAuth.js
+- **Secure Authentication**: GitHub OAuth + Credentials authentication with NextAuth.js
 - **Unified Dashboard**: Overview of all providers, domains, and records
 - **Real-time Sync**: Sync domains and records from providers
 - **Modern UI**: Built with shadcn/ui components and Tailwind CSS
 - **Responsive Design**: Works on desktop and mobile devices
+
+### Security Features
+
+- **AES-256-GCM Encryption**: Provider credentials are encrypted at rest
+- **Rate Limiting**: Protection against brute-force attacks on login/registration
+- **Input Validation**: DNS record validation before sending to providers
+- **Strong Password Policy**: Requires 8+ characters with uppercase, lowercase, and numbers
+- **Secure Logging**: Error details hidden in production logs
 
 ## Tech Stack
 
@@ -85,10 +93,16 @@ Edit `.env.local` with your credentials:
 AUTH_SECRET="your-secret-key-here"
 AUTH_URL="http://localhost:3000"
 
-# GitHub OAuth
+# Credentials Encryption Key (AES-256-GCM)
+# Generate with: openssl rand -base64 32
+CREDENTIALS_ENCRYPTION_KEY="your-encryption-key-here"
+
+# GitHub OAuth (optional - for OAuth login)
 GITHUB_CLIENT_ID="your-github-client-id"
 GITHUB_CLIENT_SECRET="your-github-client-secret"
 ```
+
+> **Important**: Generate a secure encryption key using `openssl rand -base64 32`. This key is used to encrypt DNS provider credentials in the database.
 
 4. Initialize the database:
 
@@ -140,14 +154,19 @@ dns-manager/
 │   ├── app/                    # Next.js App Router
 │   │   ├── (dashboard)/        # Dashboard pages
 │   │   ├── api/auth/           # NextAuth API routes
-│   │   └── login/              # Login page
+│   │   ├── login/              # Login page
+│   │   └── register/           # Registration page
 │   ├── components/
 │   │   ├── ui/                 # shadcn/ui components
 │   │   └── layout/             # Layout components
 │   ├── lib/
 │   │   ├── db/                 # Database (Drizzle)
 │   │   ├── providers/          # DNS provider adapters
-│   │   └── auth.ts             # NextAuth config
+│   │   ├── auth.ts             # NextAuth config
+│   │   ├── crypto.ts           # AES-256-GCM encryption
+│   │   ├── rate-limit.ts       # Rate limiting
+│   │   ├── dns-validation.ts   # DNS record validation
+│   │   └── env.ts              # Environment validation
 │   └── server/                 # Server actions
 ├── data/                       # SQLite database
 └── drizzle.config.ts           # Drizzle config
