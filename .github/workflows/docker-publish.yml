@@ -1,0 +1,49 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches: ["main"] # 仅在推送到 main 分支时触发
+    tags: ["v*.*.*"]    # 或者在推送版本标签时触发
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            latest
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ id.meta.outputs.tags }}
+          labels: ${{ id.meta.outputs.labels }}
+          # Next.js standalone 构建通常需要此缓存加速
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
