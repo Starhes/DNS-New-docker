@@ -3,7 +3,9 @@ import { relations } from "drizzle-orm";
 
 // Users table (for NextAuth)
 export const users = sqliteTable("users", {
-  id: text("id").primaryKey(),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
   name: text("name"),
   email: text("email").unique(),
   emailVerified: integer("email_verified", { mode: "timestamp" }),
@@ -18,7 +20,9 @@ export const users = sqliteTable("users", {
 
 // Accounts table (for NextAuth OAuth)
 export const accounts = sqliteTable("accounts", {
-  id: text("id").primaryKey(),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
   userId: text("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
