@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { handleRegister } from "@/server/auth";
@@ -22,6 +22,25 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const redirectTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup timer on unmount to prevent memory leak
+  useEffect(() => {
+    return () => {
+      if (redirectTimerRef.current) {
+        clearTimeout(redirectTimerRef.current);
+      }
+    };
+  }, []);
+
+  // Handle redirect after successful registration
+  useEffect(() => {
+    if (success) {
+      redirectTimerRef.current = setTimeout(() => {
+        router.push("/login");
+      }, 2000);
+    }
+  }, [success, router]);
 
   async function onSubmit(formData: FormData) {
     setError(null);
@@ -31,10 +50,6 @@ export default function RegisterPage() {
       const result = await handleRegister(formData);
       if (result.success) {
         setSuccess(true);
-        // Redirect to login after 2 seconds
-        setTimeout(() => {
-          router.push("/login");
-        }, 2000);
       } else {
         setError(result.error || "Registration failed");
       }
@@ -105,7 +120,7 @@ export default function RegisterPage() {
                   disabled={isLoading}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Minimum 6 characters
+                  8+ characters with uppercase, lowercase, and number
                 </p>
               </div>
 

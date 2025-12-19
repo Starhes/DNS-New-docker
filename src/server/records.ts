@@ -5,14 +5,11 @@ import { db } from "@/lib/db";
 import { providers, domains, records } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { createProvider } from "@/lib/providers";
+import { decryptCredentials } from "@/lib/crypto";
+import { validateDNSRecord } from "@/lib/dns-validation";
 import { revalidatePath } from "next/cache";
 import { nanoid } from "nanoid";
 import type { CreateRecordInput, UpdateRecordInput } from "@/lib/providers/types";
-
-// Decrypt credentials helper
-function decryptCredentials(encrypted: string): Record<string, string> {
-  return JSON.parse(Buffer.from(encrypted, "base64").toString("utf-8"));
-}
 
 async function getProviderForDomain(domainId: string, userId: string) {
   const [domain] = await db
@@ -44,6 +41,19 @@ export async function createRecord(
   const session = await auth();
   if (!session?.user?.id) {
     throw new Error("Unauthorized");
+  }
+
+  // Validate input before sending to provider
+  const validation = validateDNSRecord({
+    type: input.type,
+    name: input.name,
+    content: input.content,
+    ttl: input.ttl,
+    priority: input.priority,
+  });
+
+  if (!validation.valid) {
+    return { success: false, error: validation.error };
   }
 
   try {
@@ -87,6 +97,21 @@ export async function updateRecord(
   const session = await auth();
   if (!session?.user?.id) {
     throw new Error("Unauthorized");
+  }
+
+  // Validate input before sending to provider (only if all required fields are provided)
+  if (input.type && input.name && input.content) {
+    const validation = validateDNSRecord({
+      type: input.type,
+      name: input.name,
+      content: input.content,
+      ttl: input.ttl,
+      priority: input.priority,
+    });
+
+    if (!validation.valid) {
+      return { success: false, error: validation.error };
+    }
   }
 
   try {

@@ -5,18 +5,9 @@ import { db } from "@/lib/db";
 import { providers, domains, records } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { createProvider, getAvailableProviders } from "@/lib/providers";
+import { encryptCredentials, decryptCredentials } from "@/lib/crypto";
 import { revalidatePath } from "next/cache";
 import { nanoid } from "nanoid";
-
-// Simple encryption for credentials (in production, use a proper encryption library)
-function encryptCredentials(data: Record<string, string>): string {
-  // In production, use proper encryption with a secret key
-  return Buffer.from(JSON.stringify(data)).toString("base64");
-}
-
-function decryptCredentials(encrypted: string): Record<string, string> {
-  return JSON.parse(Buffer.from(encrypted, "base64").toString("utf-8"));
-}
 
 export async function getProviders() {
   const session = await auth();

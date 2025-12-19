@@ -5,6 +5,14 @@ import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq, or } from "drizzle-orm";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
+import { headers } from "next/headers";
+import {
+  checkRateLimit,
+  resetRateLimit,
+  getClientIdentifier,
+  RATE_LIMIT_CONFIGS,
+} from "@/lib/rate-limit";
 
 // Registration result type
 export type RegisterResult = {
@@ -36,6 +44,19 @@ export async function handleSignOut() {
  * Register a new user with credentials
  */
 export async function handleRegister(formData: FormData): Promise<RegisterResult> {
+  // Rate limiting
+  const headersList = await headers();
+  const clientIp = getClientIdentifier(headersList);
+  const rateLimit = checkRateLimit("register", clientIp, RATE_LIMIT_CONFIGS.register);
+
+  if (!rateLimit.success) {
+    const retryMinutes = Math.ceil((rateLimit.retryAfterMs || 0) / 60000);
+    return {
+      success: false,
+      error: `Too many registration attempts. Please try again in ${retryMinutes} minutes.`,
+    };
+  }
+
   const email = formData.get("email") as string;
   const username = formData.get("username") as string;
   const password = formData.get("password") as string;
@@ -52,9 +73,14 @@ export async function handleRegister(formData: FormData): Promise<RegisterResult
     return { success: false, error: "Invalid email format" };
   }
 
-  // Validate password length
-  if (password.length < 6) {
-    return { success: false, error: "Password must be at least 6 characters" };
+  // Validate password strength
+  // Require: 8+ chars, at least 1 uppercase, 1 lowercase, 1 number
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&_\-#^()]{8,}$/;
+  if (!passwordRegex.test(password)) {
+    return {
+      success: false,
+      error: "Password must be at least 8 characters with uppercase, lowercase, and number",
+    };
   }
 
   // Validate password confirmation
@@ -104,7 +130,9 @@ export async function handleRegister(formData: FormData): Promise<RegisterResult
 
     return { success: true };
   } catch (error) {
-    console.error("Registration error:", error);
+    // Log with error ID only - no sensitive details in production
+    const errorId = crypto.randomUUID();
+    console.error(`[Registration Error ${errorId}]`, process.env.NODE_ENV === "development" ? error : "");
     return { success: false, error: "An error occurred during registration" };
   }
 }
@@ -120,17 +148,34 @@ export async function handleCredentialsSignIn(formData: FormData): Promise<Login
     return { success: false, error: "Email/username and password are required" };
   }
 
+  // Rate limiting - use identifier (email/username) for more precise limiting
+  const headersList = await headers();
+  const clientIp = getClientIdentifier(headersList);
+  const rateLimitKey = `${clientIp}:${identifier}`;
+  const rateLimit = checkRateLimit("login", rateLimitKey, RATE_LIMIT_CONFIGS.login);
+
+  if (!rateLimit.success) {
+    const retryMinutes = Math.ceil((rateLimit.retryAfterMs || 0) / 60000);
+    return {
+      success: false,
+      error: `Too many login attempts. Please try again in ${retryMinutes} minutes.`,
+    };
+  }
+
   try {
     await signIn("credentials", {
       identifier,
       password,
       redirectTo: "/",
     });
+    // Reset rate limit on successful login
+    resetRateLimit("login", rateLimitKey);
     return { success: true };
   } catch (error: unknown) {
     // NextAuth throws an error on failed login
     if (error instanceof Error && error.message.includes("NEXT_REDIRECT")) {
-      // This is actually a successful redirect, re-throw it
+      // This is actually a successful redirect, reset rate limit and re-throw
+      resetRateLimit("login", rateLimitKey);
       throw error;
     }
     return { success: false, error: "Invalid credentials" };
