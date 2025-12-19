@@ -53,7 +53,7 @@ function getProviderIcon(name: string) {
     case "alidns":
       return (
         <svg className="h-5 w-5 text-orange-600" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12.261 3.004c-.282-.006-.564.09-.79.29L3.5 10.39c-.49.43-.49 1.19 0 1.62l7.97 7.096c.45.4 1.13.4 1.58 0l7.97-7.096c.49-.43.49-1.19 0-1.62l-7.97-7.096a1.07 1.07 0 0 0-.79-.29zm-.26 2.086 6.39 5.69-6.39 5.69-6.39-5.69 6.39-5.69z" />
+          <path d="M12.261 3.004c-.282-.006-.564.09-.79.29L3.5 10.39c-.49.43-.49 1.19 0 1.62l7.97 7.096c.45.4 1.13.4 1.58 0l7.97-7.096c.49-.43.49-1.19 0-1.62l-7.97-7.096 a1.07 1.07 0 0 0-.79-.29zm-.26 2.086 6.39 5.69-6.39 5.69-6.39-5.69 6.39-5.69z" />
         </svg>
       );
     case "dnspod":
@@ -153,14 +153,15 @@ export default async function ProvidersPage() {
                 </div>
 
                 <div className="flex gap-2">
-                  <form action={syncProvider.bind(null, provider.id)}>
+                  {/* 使用包装函数以符合 React 19 Action 类型要求 */}
+                  <form action={async () => { "use server"; await syncProvider(provider.id); }}>
                     <Button type="submit" variant="outline" size="sm">
                       <RefreshCw className="mr-1 h-3 w-3" />
                       Sync
                     </Button>
                   </form>
 
-                  <form action={deleteProvider.bind(null, provider.id)}>
+                  <form action={async () => { "use server"; await deleteProvider(provider.id); }}>
                     <Button type="submit" variant="destructive" size="sm">
                       <Trash2 className="mr-1 h-3 w-3" />
                       Delete
