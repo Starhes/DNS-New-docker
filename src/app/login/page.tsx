@@ -1,4 +1,4 @@
-import { signIn } from "@/lib/auth";
+import { handleGitHubSignIn } from "@/server/auth";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -20,12 +20,7 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form
-            action={async () => {
-              "use server";
-              await signIn("github", { redirectTo: "/" });
-            }}
-          >
+          <form action={handleGitHubSignIn}>
             <Button type="submit" className="w-full" size="lg">
               <Github className="mr-2 h-5 w-5" />
               Sign in with GitHub

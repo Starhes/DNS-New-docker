@@ -14,7 +14,6 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, RefreshCw, Trash2, Cloud, Server } from "lucide-react";
 import Link from "next/link";
 import { syncProvider, deleteProvider } from "@/server/providers";
-import { revalidatePath } from "next/cache";
 
 async function getUserProviders(userId: string) {
   const userProviders = await db
@@ -154,24 +153,14 @@ export default async function ProvidersPage() {
                 </div>
 
                 <div className="flex gap-2">
-                  <form
-                    action={async () => {
-                      "use server";
-                      await syncProvider(provider.id);
-                    }}
-                  >
+                  <form action={syncProvider.bind(null, provider.id)}>
                     <Button type="submit" variant="outline" size="sm">
                       <RefreshCw className="mr-1 h-3 w-3" />
                       Sync
                     </Button>
                   </form>
 
-                  <form
-                    action={async () => {
-                      "use server";
-                      await deleteProvider(provider.id);
-                    }}
-                  >
+                  <form action={deleteProvider.bind(null, provider.id)}>
                     <Button type="submit" variant="destructive" size="sm">
                       <Trash2 className="mr-1 h-3 w-3" />
                       Delete

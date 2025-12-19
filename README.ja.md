@@ -1,7 +1,7 @@
 # DNS Manager
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js)](https://nextjs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-38B2AC?logo=tailwind-css)](https://tailwindcss.com/)
 
@@ -32,7 +32,7 @@
 
 | カテゴリ | 技術 |
 |----------|------|
-| フレームワーク | Next.js 15 (App Router) |
+| フレームワーク | Next.js 16 (App Router) |
 | 言語 | TypeScript 5.0 |
 | スタイリング | Tailwind CSS 4 + shadcn/ui |
 | データベース | SQLite + Drizzle ORM |
@@ -62,8 +62,8 @@
 1. リポジトリをクローン：
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/dns-manager.git
-cd dns-manager
+git clone https://github.com/Alice-easy/DNS-New.git
+cd DNS-New
 ```
 
 2. 依存関係をインストール：
